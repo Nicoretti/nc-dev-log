@@ -9,7 +9,9 @@ _stderr = Console(stderr=True)
 
 
 @task
-def buckets(_context, host="http://127.0.0.1", port=6666, username="w", password="write"):
+def buckets(
+    _context, host="http://127.0.0.1", port=6666, username="w", password="write"
+):
     """
     List all buckets of a specific bucketfs service
 

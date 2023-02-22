@@ -11,7 +11,7 @@ from rich.console import Console
 _console = Console()
 
 
-@task(iterable=["id", 'code'])
+@task(iterable=["id", "code"])
 def explain(_context, id: None, code=None):
     """
     Lists detailed errno information based on the code or id.
