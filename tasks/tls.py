@@ -24,6 +24,8 @@ def ca(context, name="TestCA", destination=_DEFAULT_DESTINATION):
     """
     _check_for_openssl()
     destination = Path(destination)
+    destination.mkdir(exist_ok=True)
+
     keyfile = destination / _ROOT_KEY
     certificate = destination / _ROOT_CERT
 
@@ -66,8 +68,8 @@ _SAN_CONFIG_TEMPLATE = (
 
 @contextmanager
 def san_config(name, dns_entries=None, ip_entries=None):
-    default_dns = ["localhost"]
-    default_ips = ["127.0.0.1"]
+    if not dns_entries and not ip_entries:
+        raise Exception("At least one dns or ip entry must be specified")
     dns_entries = dns_entries if dns_entries else []
     ip_entries = ip_entries if ip_entries else []
     with TemporaryDirectory() as tmpdir:
@@ -103,6 +105,8 @@ def server(
     """
     _check_for_openssl()
     destination = Path(destination)
+    destination.mkdir(exist_ok=True)
+
     keyfile = destination / "Server.key"
     signing_request = destination / "Server.csr"
     certificate = destination / "Server.crt"
