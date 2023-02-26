@@ -23,7 +23,7 @@ sudo chown -R certbot:acme /etc/letsencrypt/ /var/log/letsencrypt/ /var/lib/lets
 - 3.2. install certbot
 - 3.3 run certbot
 
-```
+```shell
 sudo su -s /bin/fish certbot
 ```
 
