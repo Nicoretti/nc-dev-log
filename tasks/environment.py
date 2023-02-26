@@ -9,11 +9,7 @@ from rich.table import Table
 from rich.console import Console
 from rich.theme import Theme
 
-themes = Theme({
-    "info": "cyan",
-    "warning": "yellow",
-    "danger": "bold red"
-})
+themes = Theme({"info": "cyan", "warning": "yellow", "danger": "bold red"})
 
 _stdout = Console(theme=themes)
 _stderr = Console(theme=themes, stderr=True)
@@ -40,15 +36,17 @@ def env(_context, table=True):
 
 @task
 def path(_context, warnings=True):
-    paths = os.environ['PATH'].split(':')
-    duplicates = (p for p, count in Counter(paths).items() if count > 1) if warnings else []
+    paths = os.environ["PATH"].split(":")
+    duplicates = (
+        (p for p, count in Counter(paths).items() if count > 1) if warnings else []
+    )
     for p in duplicates:
-        _stderr.print(f"Warning: found duplicates of {p} in PATH", style='warning')
+        _stderr.print(f"Warning: found duplicates of {p} in PATH", style="warning")
     deduplicated_paths = dict().fromkeys(paths)
     for p in deduplicated_paths:
         _stdout.print(p)
 
 
-namespace = Collection('env')
+namespace = Collection("env")
 namespace.add_task(env)
 namespace.add_task(path)
