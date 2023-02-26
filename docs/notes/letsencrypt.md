@@ -28,6 +28,7 @@ sudo su -s /bin/fish certbot
 ```
 
 ### Various Commands
+
 ```shell
 certbot certonly -n --agree-tos --email nico.coretti@gmail.com --expand --webroot -d blog.nicoretti.dev -d syncthing.nicoretti.dev -d services.nicoretti.dev -d shop.nicoretti.dev -d nicoretti.dev
 sudo chown root:acme /etc/nginx/nginx.conf
