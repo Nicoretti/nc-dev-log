@@ -28,5 +28,11 @@ def _deny_filter(files: Iterable[Path], deny_list: Iterable[str]) -> Iterable[Pa
 
 @task
 def python(_context, root: str = "."):
+    """
+    List all python files within a specific root directory.
+
+    Args:
+        root: where the search shall be started (default: current working directory).
+    """
     for f in _python_files(Path(root)):
         stdout.print(f)
