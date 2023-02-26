@@ -6,9 +6,7 @@ from invoke import (
     task,
 )
 from rich.table import Table
-from rich.console import Console
-
-_console = Console()
+from invokees.terminal import stdout
 
 
 @task(iterable=["id", "code"])
@@ -43,7 +41,7 @@ def explain(_context, id: None, code=None):
     for id, code in sorted(error_codes):
         table.add_row(f"{id}", code, os.strerror(id))
 
-    _console.print(table)
+    stdout.print(table)
 
 
 namespace = Collection()

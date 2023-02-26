@@ -1,13 +1,11 @@
 """Automation tasks for the crc project"""
 from pathlib import Path
+
 from typing import Iterable
 
 from invoke import task
 
-from rich.console import Console
-
-_stdout = Console()
-_stderr = Console(stderr=True)
+from invokees.terminal import stdout
 
 
 def _python_files(
@@ -29,6 +27,6 @@ def _deny_filter(files: Iterable[Path], deny_list: Iterable[str]) -> Iterable[Pa
 
 
 @task
-def python(_context, root: str = '.'):
+def python(_context, root: str = "."):
     for f in _python_files(Path(root)):
-        _stdout.print(f)
+        stdout.print(f)

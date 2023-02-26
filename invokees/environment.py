@@ -6,13 +6,7 @@ from invoke import (
     task,
 )
 from rich.table import Table
-from rich.console import Console
-from rich.theme import Theme
-
-themes = Theme({"info": "cyan", "warning": "yellow", "danger": "bold red"})
-
-_stdout = Console(theme=themes)
-_stderr = Console(theme=themes, stderr=True)
+from invokees.terminal import stdout, stderr
 
 
 @task
@@ -31,7 +25,7 @@ def env(_context, table=True):
 
     output = table_based if table else raw
     for e in output(os.environ):
-        _stdout.print(e)
+        stdout.print(e)
 
 
 @task
@@ -41,10 +35,10 @@ def path(_context, warnings=True):
         (p for p, count in Counter(paths).items() if count > 1) if warnings else []
     )
     for p in duplicates:
-        _stderr.print(f"Warning: found duplicates of {p} in PATH", style="warning")
+        stderr.print(f"Warning: found duplicates of {p} in PATH", style="warning")
     deduplicated_paths = dict().fromkeys(paths)
     for p in deduplicated_paths:
-        _stdout.print(p)
+        stdout.print(p)
 
 
 namespace = Collection("env")

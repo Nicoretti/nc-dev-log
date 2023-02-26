@@ -2,10 +2,7 @@ from collections import defaultdict
 from invoke import task, Collection
 from exasol.bucketfs import Service
 from rich.tree import Tree
-from rich.console import Console
-
-_stdout = Console()
-_stderr = Console(stderr=True)
+from invokees.terminal import stdout
 
 
 @task
@@ -30,8 +27,8 @@ def buckets(
             for f in bucketfs[bucket].files:
                 child.add(f"📄 {f}", style="green")
     except Exception as ex:
-        _stdout.print(f"Couldn't list bucket, details: {ex}")
-    _stdout.print(tree)
+        stdout.print(f"Couldn't list bucket, details: {ex}")
+    stdout.print(tree)
 
 
 namespace = Collection()
