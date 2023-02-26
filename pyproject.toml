@@ -1,7 +1,6 @@
 [tool.poetry]
 name = "nc-dev-jornal"
 packages = [
-    {include = "tasks"},
     {include = "invokees"}
 ]
 version = "0.1.0"
