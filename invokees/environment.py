@@ -11,6 +11,12 @@ from invokees.terminal import stdout, stderr
 
 @task
 def env(_context, table=True):
+    """
+    List all environment variables and their values.
+
+    Args:
+        table: whether nor not to format it as table (default: true).
+    """
     def raw(e):
         for name, value in e.items():
             yield f"{name}: {value}"
@@ -30,6 +36,13 @@ def env(_context, table=True):
 
 @task
 def path(_context, warnings=True):
+    """
+    List all paths within the PATH variable.
+
+    Args:
+        warnings: warn if a path is contained multiple times within the PATH variable
+                  (default: true).
+    """
     paths = os.environ["PATH"].split(":")
     duplicates = (
         (p for p, count in Counter(paths).items() if count > 1) if warnings else []
