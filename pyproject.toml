@@ -1,6 +1,9 @@
 [tool.poetry]
 name = "nc-dev-jornal"
-packages = [{include = "actions"}]
+packages = [
+    {include = "tasks"},
+    {include = "invokees"}
+]
 version = "0.1.0"
 description = ""
 authors = ["Nicola Coretti <nico.coretti@gmail.com>"]

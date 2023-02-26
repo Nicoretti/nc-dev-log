@@ -1,9 +1,9 @@
 from pathlib import Path
 from invoke import task, Collection
-from tasks.files import _python_files
+from invokees.files import _python_files
 
 from rich.console import Console
-from tasks.cmd import command
+from invokees.cmd import command
 
 _stdout = Console()
 _stderr = Console(stderr=True)
