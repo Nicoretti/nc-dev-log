@@ -1,27 +1,39 @@
+import sys
 from inspect import cleandoc
 from pathlib import Path
 from shutil import which
 from tempfile import TemporaryDirectory
 from contextlib import contextmanager
 from invoke import task, Collection
+from functools import wraps
+from invokees.terminal import stderr
 
 
-def _check_for_openssl():
-    if which("openssl"):
-        return
-    raise Exception("`openssl` is not available!")
+def requires_openssl(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        if not which("openssl"):
+            error_msg = "Could not execute command: {name} (details: `openssl` is not available!)".format(
+                name=f.__name__
+            )
+            stderr.print(error_msg, style='error')
+            sys.exit(-1)
+        return f(*args, **kwargs)
+
+    return wrapper
 
 
 _DEFAULT_DESTINATION = "./certs"
 _ROOT_KEY = "RootCA.key"
 _ROOT_CERT = "RootCA.crt"
 
+
 @task
+@requires_openssl
 def ca(context, name="TestCA", destination=_DEFAULT_DESTINATION):
     """
     Create all artifacts required for a CA
     """
-    _check_for_openssl()
     destination = Path(destination)
     destination.mkdir(exist_ok=True)
 
@@ -38,30 +50,30 @@ def ca(context, name="TestCA", destination=_DEFAULT_DESTINATION):
 
 
 _SAN_CONFIG_TEMPLATE = (
-    cleandoc(
-        """
-    [req]
-    default_bits  = 4096
-    distinguished_name = req_distinguished_name
-    req_extensions = req_ext
-    x509_extensions = v3_req
-    prompt = no
-    [req_distinguished_name]
-    countryName = XX
-    stateOrProvinceName = N/A
-    localityName = N/A
-    organizationName = Self-signed certificate
-    commonName = {name} 
-    [req_ext]
-    subjectAltName = @alt_names
-    [v3_req]
-    subjectAltName = @alt_names
-    [alt_names]
-    {dns_entries}
-    {ip_entries}
-"""
-    )
-    + "\n"
+        cleandoc(
+            """
+        [req]
+        default_bits  = 4096
+        distinguished_name = req_distinguished_name
+        req_extensions = req_ext
+        x509_extensions = v3_req
+        prompt = no
+        [req_distinguished_name]
+        countryName = XX
+        stateOrProvinceName = N/A
+        localityName = N/A
+        organizationName = Self-signed certificate
+        commonName = {name} 
+        [req_ext]
+        subjectAltName = @alt_names
+        [v3_req]
+        subjectAltName = @alt_names
+        [alt_names]
+        {dns_entries}
+        {ip_entries}
+    """
+        )
+        + "\n"
 )
 
 
@@ -88,19 +100,19 @@ def san_config(name, dns_entries=None, ip_entries=None):
 
 
 @task(iterable=["dns", "ip"])
+@requires_openssl
 def server(
-    context,
-    name="Test Server",
-    destination=_DEFAULT_DESTINATION,
-    dns=None,
-    ip=None,
-    root_cert=None,
-    root_key=None,
+        context,
+        name="Test Server",
+        destination=_DEFAULT_DESTINATION,
+        dns=None,
+        ip=None,
+        root_cert=None,
+        root_key=None,
 ):
     """
     Create all artifacts required for a server to do tls.
     """
-    _check_for_openssl()
     destination = Path(destination)
     destination.mkdir(exist_ok=True)
 
