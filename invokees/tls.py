@@ -7,6 +7,7 @@ from contextlib import contextmanager
 from invoke import task, Collection
 from functools import wraps
 from invokees.terminal import stderr
+from rich.rule import Rule
 
 
 def requires_openssl(f):
@@ -16,7 +17,7 @@ def requires_openssl(f):
             error_msg = "Could not execute command: {name} (details: `openssl` is not available!)".format(
                 name=f.__name__
             )
-            stderr.print(error_msg, style='error')
+            stderr.print(error_msg, style="error")
             sys.exit(-1)
         return f(*args, **kwargs)
 
@@ -50,30 +51,30 @@ def ca(context, name="TestCA", destination=_DEFAULT_DESTINATION):
 
 
 _SAN_CONFIG_TEMPLATE = (
-        cleandoc(
-            """
-        [req]
-        default_bits  = 4096
-        distinguished_name = req_distinguished_name
-        req_extensions = req_ext
-        x509_extensions = v3_req
-        prompt = no
-        [req_distinguished_name]
-        countryName = XX
-        stateOrProvinceName = N/A
-        localityName = N/A
-        organizationName = Self-signed certificate
-        commonName = {name} 
-        [req_ext]
-        subjectAltName = @alt_names
-        [v3_req]
-        subjectAltName = @alt_names
-        [alt_names]
-        {dns_entries}
-        {ip_entries}
-    """
-        )
-        + "\n"
+    cleandoc(
+        """
+            [req]
+            default_bits  = 4096
+            distinguished_name = req_distinguished_name
+            req_extensions = req_ext
+            x509_extensions = v3_req
+            prompt = no
+            [req_distinguished_name]
+            countryName = XX
+            stateOrProvinceName = N/A
+            localityName = N/A
+            organizationName = Self-signed certificate
+            commonName = {name} 
+            [req_ext]
+            subjectAltName = @alt_names
+            [v3_req]
+            subjectAltName = @alt_names
+            [alt_names]
+            {dns_entries}
+            {ip_entries}
+        """
+    )
+    + "\n"
 )
 
 
@@ -102,13 +103,13 @@ def san_config(name, dns_entries=None, ip_entries=None):
 @task(iterable=["dns", "ip"])
 @requires_openssl
 def server(
-        context,
-        name="Test Server",
-        destination=_DEFAULT_DESTINATION,
-        dns=None,
-        ip=None,
-        root_cert=None,
-        root_key=None,
+    context,
+    name="Test Server",
+    destination=_DEFAULT_DESTINATION,
+    dns=None,
+    ip=None,
+    root_cert=None,
+    root_key=None,
 ):
     """
     Create all artifacts required for a server to do tls.
@@ -140,6 +141,83 @@ def server(
         context.run(command)
 
 
+@task
+@requires_openssl
+def tutorial(context, destination=_DEFAULT_DESTINATION):
+    """
+    Creates a full set of certificates (CA, Server, ...) according to the exasol TLS tutorial.
+
+    (see also: https://github.com/exasol/exasol-java-tutorial/blob/main/tls-tutorial/doc/use_your_own_certificate.md)
+
+    Args:
+        destination:
+    """
+    destination = Path(destination)
+    destination.mkdir(exist_ok=True)
+
+    root_key = destination / _ROOT_KEY
+    root_cert = destination / _ROOT_CERT
+
+    from rich.prompt import Prompt
+
+    stderr.print(Rule("Creating CA artifacts", style="info"), style="info")
+    ca_key_password = Prompt.ask("Please enter a PEM pass phrase", password=True)
+
+    stderr.print("Creating CA keys", style="info")
+    context.run(
+        f"openssl genrsa -passout pass:'{ca_key_password}' -aes256 -out {root_key} 4096"
+    )
+
+    stderr.print("Creating CA certificate", style="info")
+    context.run(
+        f"openssl req -x509 -new -nodes -key {root_key} "
+        f"-sha256 -days 365 -out {root_cert} "
+        f"-passin pass:'{ca_key_password}' "
+        "-subj '/CN=TLS Tutorial CA/C=DE/L=Bavaria/O=Tutorial Organization'"
+    )
+
+    server_key = destination / "Server.key"
+    signing_req = destination / "Server.csr"
+    server_cert = destination / "Server.crt"
+
+    stderr.print(Rule("Creating Server artifacts", style="info"), style="info")
+    stderr.print("Creating server keys")
+    context.run(f"openssl genrsa -out {server_key} 4096")
+
+    stderr.print("Creating signing request")
+    context.run(
+        f"openssl req -new -nodes -key {server_key} "
+        f"-sha256 -out {signing_req} "
+        "-subj '/CN=TLS Tutorial XYZ Server/C=DE/L=Bavaria/O=Tutorial Organization'"
+    )
+
+    stderr.print(
+        Rule("Create server certificate from signing request", style="info"),
+        style="info",
+    )
+    with TemporaryDirectory() as tmpdir:
+        tmpdir = Path(tmpdir)
+        config = tmpdir / "server_cert_extensions.cfg"
+        with open(config, "w") as f:
+            f.write(
+                cleandoc(
+                    """
+                [extensions]
+                keyUsage = critical, nonRepudiation, digitalSignature, keyEncipherment, keyAgreement
+                basicConstraints = CA:false
+                """
+                )
+            )
+        context.run(
+            f"openssl x509 -req -in {signing_req} "
+            f"-CA {root_cert} -CAkey {root_key} -CAcreateserial "
+            f"-out {server_cert} -days 90 -sha256 "
+            f"-passin pass:'{ca_key_password}' "
+            f"-extfile {config} -extensions extensions"
+        )
+
+
 namespace = Collection()
 namespace.add_task(ca)
 namespace.add_task(server)
+namespace.add_task(tutorial)
