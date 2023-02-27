@@ -12,10 +12,9 @@ def _check_for_openssl():
     raise Exception("`openssl` is not available!")
 
 
+_DEFAULT_DESTINATION = "./certs"
 _ROOT_KEY = "RootCA.key"
 _ROOT_CERT = "RootCA.crt"
-_DEFAULT_DESTINATION = "./certs"
-
 
 @task
 def ca(context, name="TestCA", destination=_DEFAULT_DESTINATION):
@@ -68,8 +67,6 @@ _SAN_CONFIG_TEMPLATE = (
 
 @contextmanager
 def san_config(name, dns_entries=None, ip_entries=None):
-    if not dns_entries and not ip_entries:
-        raise Exception("At least one dns or ip entry must be specified")
     dns_entries = dns_entries if dns_entries else []
     ip_entries = ip_entries if ip_entries else []
     with TemporaryDirectory() as tmpdir:
@@ -97,8 +94,8 @@ def server(
     destination=_DEFAULT_DESTINATION,
     dns=None,
     ip=None,
-    root_cert=_ROOT_CERT,
-    root_key=_ROOT_KEY,
+    root_cert=None,
+    root_key=None,
 ):
     """
     Create all artifacts required for a server to do tls.
@@ -121,8 +118,8 @@ def server(
         )
 
         # create signed server certificate
-        root_cert = Path(root_cert)
-        root_key = Path(root_key)
+        root_cert = Path(root_cert) if root_cert else Path(destination / _ROOT_CERT)
+        root_key = Path(root_key) if root_key else Path(destination / _ROOT_KEY)
         command = (
             f"openssl x509 -req -in {signing_request} -CA {root_cert} -CAkey {root_key} "
             f"-CAcreateserial -out {certificate} -days 90 -sha256 "
