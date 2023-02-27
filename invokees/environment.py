@@ -17,6 +17,7 @@ def env(_context, table=True):
     Args:
         table: whether nor not to format it as table (default: true).
     """
+
     def raw(e):
         for name, value in e.items():
             yield f"{name}: {value}"

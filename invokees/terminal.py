@@ -1,7 +1,9 @@
 from rich.console import Console
 from rich.theme import Theme
 
-themes = Theme({"info": "cyan", "warning": "yellow", "error": "red", "danger": "bold red"})
+themes = Theme(
+    {"info": "cyan", "warning": "yellow", "error": "red", "danger": "bold red"}
+)
 
 stdout = Console(theme=themes)
 stderr = Console(theme=themes, stderr=True)
